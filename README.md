@@ -1,7 +1,3 @@
-# Greeter Envio Hardhat tutorial
-
-The complete guide to this tutorial can be found [here](https//docs.envio.dev/docs/greeter-hardhat-tutorial)
-
 ## Indexer Requirements
 
 The following files are required to use the Indexer:
@@ -17,18 +13,19 @@ These files are auto-generated according to the Greeter template by running `env
 Example config file from Greeter scenario:
 
 ```yaml
-version: 1.0.0
+name: greeter_indexer
+version: 0.0.0
 description: Greeter indexer
-repository: https://github.com/PaulRBerg/hardhat-template
 networks:
   - id: 1337
-    rpc_url: http://localhost:8545
+    rpc_config: 
+      url: http://localhost:8545
     start_block: 0
     contracts:
       - name: Greeter
         abi_file_path: abis/greeter-abi.json
-        address: ["0x2B502ab6F783c2Ae96A75dc68cf82a77ce2637c2"]
-        handler: src/EventHandlers.js
+        address: ["0x2B2f78c5BF6D9C12Ee1225D5F374aa91204580c3"]
+        handler: ./src/EventHandlers.js
         events:
           - name: "NewGreeting"
             requiredEntities:
@@ -40,17 +37,17 @@ networks:
               - name: "Greeting"
                 labels:
                   - "greetingWithChanges"
-
 ```
 
 **Field Descriptions**
 
+- `name` - NameOfTheIndexer
 - `version` - Version of the config schema used by the indexer
 - `description` - Description of the project
-- `repository` - Repository of the project
 - `networks` - Configuration of the blockchain networks that the project is deployed on
   - `id` - Chain identifier of the network
-  - `rpc_url` - RPC URL that will be used to subscribe to blockchain data on this network
+- `rpc_config` - RPC Config that will be used to subscribe to blockchain data on this network
+    - `url` -  URL of the RPC endpoint
   - `start_block` - Initial block from which the indexer will start listening for events
   - `contracts` - Configuration for each contract deployed on the network
     - `name` - User-defined contract name
@@ -90,13 +87,15 @@ The entity and event types will then be available in the handler files.
 
 A user can specify a specific handler file per contract that processes events emitted by that contract.
 Each event handler requires two functions to be registered in order to enable full functionality within the indexer.
-1. A `loader` function
-2. A `handler` function
+1. An `<event>LoadEntities` function
+2. An `<event>Handler` function
 
-### Example of registering a `loader` function for the `NewGreeting` event from the above example config:
+### Example of registering a `loadEntities` function for the `NewGreeting` event from the above example config:
 
 ```javascript
-GreeterContract.NewGreeting.loader((event, context) => {
+let { GreeterContract } = require("../generated/src/Handlers.bs.js");
+
+GreeterContract.registerNewGreetingLoadEntities((event, context) => {
   context.greeting.greetingWithChangesLoad(event.params.user.toString());
 });
 ```
@@ -112,15 +111,17 @@ events:
           - "greetingWithChanges"
 ```
 
-- The register function `NewGreeting.loader` follows a naming convention for all events: `<EventName>.loader`. 
+- The register function `registerNewGreetingLoadEntities` follows a naming convention for all events: `register<EventName>LoadEntities`. 
 - Within the function that is being registered the user must define the criteria for loading the `greetingWithChanges` entity which corresponds to the label defined in the config. 
 - This is made available to the user through the load entity context defined as `contextUpdator`.
 - In the case of the above example the `greetingWithChanges` loads a `Greeting` entity that corresponds to the id received from the event.
 
-### Example of registering a `handler` function for the `NewGreeting` event and using the loaded entity `greetingWithChanges`:
+### Example of registering a `Handler` function for the `NewGreeting` event and using the loaded entity `greetingWithChanges`:
 
 ```javascript
-GreeterContract.NewGreeting.handler((event, context) => {
+let { GreeterContract } = require("../generated/src/Handlers.bs.js");
+
+GreeterContract.registerNewGreetingHandler((event, context) => {
   let existingGreeter = context.greeting.greetingWithChangesLoad;
 
   if (existingGreeter != undefined) {
@@ -139,7 +140,7 @@ GreeterContract.NewGreeting.handler((event, context) => {
 });
 ```
 
-- The handler functions also follow a naming convention for all events in the form of: `<EventName>.handler`.
+- The handler functions also follow a naming convention for all events in the form of: `register<EventName>Handler`.
 - Once the user has defined their `loadEntities` function, they are then able to retrieve the loaded entity information via the labels defined in the `config.yaml` file. 
 - In the above example, if a `Greeting` entity is found matching the load criteria in the `loadEntities` function, it will be available via `greetingWithChanges`. 
 - This is made available to the user through the handler context defined simply as `context`. 
