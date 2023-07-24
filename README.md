@@ -1,3 +1,4 @@
+
 ## Indexer Requirements
 
 The following files are required to use the Indexer:
@@ -13,26 +14,26 @@ These files are auto-generated according to the Greeter template by running `env
 Example config file from Greeter scenario:
 
 ```yaml
-name: greeter_indexer
+name: Greeter
 version: 0.0.0
 description: Greeter indexer
 networks:
-  - id: 1337
-    rpc_config: 
-      url: http://localhost:8545
-    start_block: 0
+  - id: 137 # Polygon
+    rpc_config:
+      url: https://polygon.llamarpc.com # We recommend you change this to a dedicated RPC provider
+    start_block: 45336336
     contracts:
       - name: Greeter
         abi_file_path: abis/greeter-abi.json
-        address: ["0x2B2f78c5BF6D9C12Ee1225D5F374aa91204580c3"]
+        address: "0x9D02A17dE4E68545d3a58D3a20BbBE0399E05c9c"
         handler: ./src/EventHandlers.js
         events:
-          - name: "NewGreeting"
+          - event: "NewGreeting"
             requiredEntities:
               - name: "Greeting"
                 labels:
                   - "greetingWithChanges"
-          - name: "ClearGreeting"
+          - event: "ClearGreeting"
             requiredEntities:
               - name: "Greeting"
                 labels:
